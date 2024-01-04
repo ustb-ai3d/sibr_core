@@ -25,6 +25,9 @@
 #include "core/graphics/Mesh.hpp"
 #include "core/system/Utils.hpp"
 #include <algorithm>
+#include <filesystem>
+#include <string>
+#include <vector>
 
 using namespace boost::algorithm;
 namespace sibr {
@@ -259,6 +262,35 @@ namespace sibr {
 		_meshPath = dataset_path;
 	}
 
+	void ParseData::getParsedNeurofluidData(const std::string& dataset_path)
+	{
+		// 遍历目录并筛选以"view"开头的文件夹
+		for (const auto& entry : std::filesystem::directory_iterator(dataset_path)) {
+			if (entry.is_directory()) {
+				std::string folderName = entry.path().filename().string();
+				if (folderName.substr(0, 4) == "view") {
+					// 处理transforms_test.json
+					auto testInfos = InputCamera::loadTransform(entry.path().string() + "/transforms_test.json", 800, 800, "png", 0.01f, 1000.0f, _camInfos.size());
+					_camInfos.insert(_camInfos.end(), testInfos.begin(), testInfos.end());
+
+					// 处理transforms_train.json
+					auto trainInfos = InputCamera::loadTransform(entry.path().string() + "/transforms_train.json", 800, 800, "png", 0.01f, 1000.0f, _camInfos.size());
+					_camInfos.insert(_camInfos.end(), trainInfos.begin(), trainInfos.end());
+				}
+			}
+		}
+
+		_basePathName = dataset_path;
+
+		if (_camInfos.empty()) {
+			SIBR_ERR << "Colmap camera calibration file does not exist at /" + _basePathName + "/sparse/." << std::endl;
+		}
+
+		_imgPath = dataset_path;
+		populateFromCamInfos();
+		_meshPath = dataset_path;
+	}
+
 	void ParseData::getParsedGaussianData(const std::string& dataset_path)
 	{
 		_camInfos = InputCamera::loadJSON(dataset_path + "/cameras.json");
@@ -468,6 +500,7 @@ namespace sibr {
 		std::string meshroom_sibr = myArgs.dataset_path.get() + "/StructureFromMotion/";
 		std::string chunked = myArgs.dataset_path.get() + "/chunk.dat";
 		std::string blender = myArgs.dataset_path.get() + "/transforms_train.json";
+		std::string neurofluid = myArgs.dataset_path.get() + "/box.pt";
 		std::string gaussian = myArgs.dataset_path.get() + "/cameras.json";
 
 		if(datasetTypeStr == "sibr") {
@@ -556,6 +589,10 @@ namespace sibr {
 			{
 				_datasetType = Type::BLENDER;
 			}
+			else if (sibr::fileExists(neurofluid))
+			{
+				_datasetType = Type::NEUROFLUID;
+			}
 			else {
 				SIBR_ERR << "Cannot determine type of dataset at /" + myArgs.dataset_path.get() + customPath << std::endl;
 			}
@@ -564,6 +601,7 @@ namespace sibr {
 		switch(_datasetType) {
 			case Type::GAUSSIAN:			getParsedGaussianData(myArgs.dataset_path); break;
 			case Type::BLENDER:			getParsedBlenderData(myArgs.dataset_path); break;
+			case Type::NEUROFLUID:			getParsedNeurofluidData(myArgs.dataset_path); break;
 			case Type::SIBR : 			getParsedBundlerData(myArgs.dataset_path, customPath, myArgs.scene_metadata_filename); break;
 			case Type::COLMAP_CAPREAL : getParsedColmapData(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, true); break;
 			case Type::COLMAP : 		getParsedColmapData(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, false); break;
