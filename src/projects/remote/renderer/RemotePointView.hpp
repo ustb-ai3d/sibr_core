@@ -84,7 +84,7 @@ namespace sibr {
 
 		RemoteRenderInfo _remoteInfo;
 
-		bool _doTrainingBool = true;
+		bool _doTrainingBool = false;
 		bool _doSHsPython = false;
 		bool _doRotScalePython = false;
 		bool _keepAlive = true;
