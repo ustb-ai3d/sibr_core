@@ -55,7 +55,7 @@ if (WIN32)
 		add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/W3;/DNOMINMAX;/MP;-D_USE_MATH_DEFINES>")
 	    #add_definitions(/W3 /DNOMINMAX /MP -D_USE_MATH_DEFINES)# /D_ITERATOR_DEBUG_LEVEL=1 because you need all external DLl to compile with this flag too
 	    set(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Release;Debug" CACHE STRING "" FORCE)
-	    set(CMAKE_CXX_STANDARD 14)
+	    set(CMAKE_CXX_STANDARD 17)
 		set(CMAKE_CXX_STANDARD_REQUIRED ON)
 		set(CMAKE_CXX_EXTENSIONS OFF)
 	elseif(${currentBuildTool} MATCHES "(make|gmake)")
