@@ -24,6 +24,7 @@ constexpr char* jTrain = "train";
 constexpr char* jViewMat = "view_matrix";
 constexpr char* jViewProjMat = "view_projection_matrix";
 constexpr char* jScalingModifier = "scaling_modifier";
+constexpr char* jFrame = "frame";
 constexpr char* jSHsPython = "shs_python";
 constexpr char* jRotScalePython = "rot_scale_python";
 constexpr char* jKeepAlive = "keep_alive";
@@ -59,6 +60,7 @@ void sibr::RemotePointView::send_receive()
 					sendData[jSHsPython] = _doSHsPython ? 1 : 0;
 					sendData[jRotScalePython] = _doRotScalePython ? 1 : 0;
 					sendData[jScalingModifier] = _scalingModifier;
+					sendData[jFrame] = _frame;
 					sendData[jResX] = _remoteInfo.imgResolution.x();
 					sendData[jResY] = _remoteInfo.imgResolution.y();
 					sendData[jFovY] = _remoteInfo.fovy;
@@ -196,6 +198,7 @@ void sibr::RemotePointView::onGUI()
 		ImGui::Checkbox("Rot-Scale Python", &_doRotScalePython);
 		ImGui::Checkbox("Keep model alive (after training)", &_keepAlive);
 		ImGui::SliderFloat("Scaling Modifier", &_scalingModifier, 0.001f, 1.0f);
+		ImGui::SliderInt("Frame", &_frame, 0, 100);
 	}
 	ImGui::End();
 }
