@@ -28,6 +28,7 @@ constexpr char* jFrame = "frame";
 constexpr char* jSHsPython = "shs_python";
 constexpr char* jRotScalePython = "rot_scale_python";
 constexpr char* jKeepAlive = "keep_alive";
+constexpr char* jNextBatch = "next_batch";
 
 void sibr::RemotePointView::send_receive()
 {
@@ -68,6 +69,7 @@ void sibr::RemotePointView::send_receive()
 					sendData[jZFar] = _remoteInfo.zfar;
 					sendData[jZNear] = _remoteInfo.znear;
 					sendData[jKeepAlive] = _keepAlive ? 1 : 0;
+					sendData[jNextBatch] = _nextBatch ? 1 : 0;
 					sendData[jViewMat] = std::vector<float>((float*)&_remoteInfo.view, ((float*)&_remoteInfo.view) + 16);
 					sendData[jViewProjMat] = std::vector<float>((float*)&_remoteInfo.viewProj, ((float*)&_remoteInfo.viewProj) + 16);
 
@@ -197,6 +199,7 @@ void sibr::RemotePointView::onGUI()
 		ImGui::Checkbox("SHs Python", &_doSHsPython);
 		ImGui::Checkbox("Rot-Scale Python", &_doRotScalePython);
 		ImGui::Checkbox("Keep model alive (after training)", &_keepAlive);
+		ImGui::Checkbox("Next batch (after exit)", &_nextBatch);
 		ImGui::SliderFloat("Scaling Modifier", &_scalingModifier, 0.001f, 1.0f);
 		ImGui::SliderInt("Frame", &_frame, 0, 100);
 	}
