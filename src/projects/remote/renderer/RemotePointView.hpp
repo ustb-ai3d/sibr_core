@@ -88,9 +88,11 @@ namespace sibr {
 		bool _doSHsPython = false;
 		bool _doRotScalePython = false;
 		bool _keepAlive = true;
+		bool _nextBatch = false;
 		bool _showSfM = false;
 
 		float _scalingModifier = 1.0f;
+		int _frame = 0;
 
 		std::atomic<bool> keep_running = true;
 
