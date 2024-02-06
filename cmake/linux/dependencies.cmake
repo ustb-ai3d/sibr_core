@@ -283,6 +283,19 @@ sibr_addlibrary(
 
 find_package(glfw3 REQUIRED)
 
+###################
+## Find OpenXR
+###################
+set(PRESENTATION_BACKEND xlib CACHE STRING " " FORCE)
+set(BUILD_WITH_XLIB_HEADERS ON CACHE BOOL " " FORCE)
+set(BUILD_WITH_XCB_HEADERS OFF CACHE BOOL " " FORCE)
+set(BUILD_WITH_WAYLAND_HEADERS OFF CACHE BOOL " " FORCE)
+
+sibr_gitlibrary(TARGET openxr_loader
+    GIT_REPOSITORY 	"https://github.com/KhronosGroup/OpenXR-SDK.git"
+    GIT_TAG			"release-1.0.29"
+)
+
 sibr_gitlibrary(TARGET imgui
     GIT_REPOSITORY 	"https://gitlab.inria.fr/sibr/libs/imgui.git"
     GIT_TAG			"741fb3ab6c7e1f7cef23ad0501a06b7c2b354944"
