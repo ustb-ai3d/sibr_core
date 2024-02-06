@@ -342,8 +342,8 @@ sibr::GaussianView::GaussianView(const sibr::BasicIBRScene::Ptr & ibrScene, uint
 	_pointbasedrenderer.reset(new PointBasedRenderer());
 	_copyRenderer = new BufferCopyRenderer();
 	_copyRenderer->flip() = true;
-	_copyRenderer->width() = render_w;
-	_copyRenderer->height() = render_h;
+	_copyRenderer->width() = _resolution.x();
+	_copyRenderer->height() = _resolution.y();
 
 	std::vector<uint> imgs_ulr;
 	const auto & cams = ibrScene->cameras()->inputCameras();
@@ -413,29 +413,61 @@ sibr::GaussianView::GaussianView(const sibr::BasicIBRScene::Ptr & ibrScene, uint
 
 	_gaussianRenderer = new GaussianSurfaceRenderer();
 
+	createImageBuffer();
+	geomBufferFunc = resizeFunctional(&geomPtr, allocdGeom);
+	binningBufferFunc = resizeFunctional(&binningPtr, allocdBinning);
+	imgBufferFunc = resizeFunctional(&imgPtr, allocdImg);
+}
+
+void sibr::GaussianView::setResolution(const Vector2i &size)
+{
+	if (size != getResolution())
+	{
+		SIBR_LOG << "Set resolution => " << size << std::endl;
+		ViewBase::setResolution(size);
+		destroyImageBuffer();
+		createImageBuffer();
+
+		_copyRenderer->width() = _resolution.x();
+		_copyRenderer->height() = _resolution.y();
+	}
+}
+
+void sibr::GaussianView::createImageBuffer()
+{
 	// Create GL buffer ready for CUDA/GL interop
 	glCreateBuffers(1, &imageBuffer);
-	glNamedBufferStorage(imageBuffer, render_w * render_h * 3 * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(imageBuffer, _resolution.x() * _resolution.y() * 3 * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
-	if (useInterop)
+	if (_use_interop)
 	{
 		if (cudaPeekAtLastError() != cudaSuccess)
 		{
 			SIBR_ERR << "A CUDA error occurred in setup:" << cudaGetErrorString(cudaGetLastError()) << ". Please rerun in Debug to find the exact line!";
 		}
 		cudaGraphicsGLRegisterBuffer(&imageBufferCuda, imageBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-		useInterop &= (cudaGetLastError() == cudaSuccess);
+		_use_interop &= (cudaGetLastError() == cudaSuccess);
 	}
-	if (!useInterop)
+	if (!_use_interop)
 	{
-		fallback_bytes.resize(render_w * render_h * 3 * sizeof(float));
+		fallback_bytes.resize(_resolution.x() * _resolution.y() * 3 * sizeof(float));
 		cudaMalloc(&fallbackBufferCuda, fallback_bytes.size());
 		_interop_failed = true;
 	}
+}
 
-	geomBufferFunc = resizeFunctional(&geomPtr, allocdGeom);
-	binningBufferFunc = resizeFunctional(&binningPtr, allocdBinning);
-	imgBufferFunc = resizeFunctional(&imgPtr, allocdImg);
+void sibr::GaussianView::destroyImageBuffer()
+{
+	if (_use_interop)
+	{
+		cudaGraphicsUnregisterResource(imageBufferCuda);
+	}
+	else
+	{
+		cudaFree(fallbackBufferCuda);
+	}
+	glDeleteBuffers(1, &imageBuffer);
+	imageBuffer = 0;
 }
 
 void sibr::GaussianView::setScene(const sibr::BasicIBRScene::Ptr & newScene)

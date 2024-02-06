@@ -81,6 +81,11 @@ namespace sibr {
 
 		virtual ~GaussianView() override;
 
+		/**
+		 * Update the view resolution
+		*/
+		void setResolution(const Vector2i& size) override;
+
 		bool* _dontshow;
 
 	protected:
@@ -103,7 +108,7 @@ namespace sibr {
 		float* shs_cuda;
 		int* rect_cuda;
 
-		GLuint imageBuffer;
+		GLuint imageBuffer = 0;
 		cudaGraphicsResource_t imageBufferCuda;
 
 		size_t allocdGeom = 0, allocdBinning = 0, allocdImg = 0;
@@ -118,6 +123,7 @@ namespace sibr {
 		float _scalingModifier = 1.0f;
 		GaussianData* gData;
 
+		bool _use_interop = true;
 		bool _interop_failed = false;
 		std::vector<char> fallback_bytes;
 		float* fallbackBufferCuda = nullptr;
@@ -128,6 +134,9 @@ namespace sibr {
 		PointBasedRenderer::Ptr _pointbasedrenderer;
 		BufferCopyRenderer* _copyRenderer;
 		GaussianSurfaceRenderer* _gaussianRenderer;
+
+		void createImageBuffer();
+		void destroyImageBuffer();
 	};
 
 } /*namespace sibr*/ 
