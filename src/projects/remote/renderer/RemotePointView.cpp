@@ -24,10 +24,15 @@ constexpr char* jTrain = "train";
 constexpr char* jViewMat = "view_matrix";
 constexpr char* jViewProjMat = "view_projection_matrix";
 constexpr char* jScalingModifier = "scaling_modifier";
+constexpr char* jSliderFloat1 = "slider_float_1";
+constexpr char* jSliderFloat2 = "slider_float_2";
 constexpr char* jFrame = "frame";
 constexpr char* jSHsPython = "shs_python";
 constexpr char* jRotScalePython = "rot_scale_python";
 constexpr char* jKeepAlive = "keep_alive";
+constexpr char* jCheckbox1 = "checkbox_1";
+constexpr char* jCheckbox2 = "checkbox_2";
+constexpr char* jCheckbox3 = "checkbox_3";
 
 void sibr::RemotePointView::send_receive()
 {
@@ -60,6 +65,8 @@ void sibr::RemotePointView::send_receive()
 					sendData[jSHsPython] = _doSHsPython ? 1 : 0;
 					sendData[jRotScalePython] = _doRotScalePython ? 1 : 0;
 					sendData[jScalingModifier] = _scalingModifier;
+					sendData[jSliderFloat1] = _sliderFloat1;
+					sendData[jSliderFloat2] = _sliderFloat2;
 					sendData[jFrame] = _frame;
 					sendData[jResX] = _remoteInfo.imgResolution.x();
 					sendData[jResY] = _remoteInfo.imgResolution.y();
@@ -68,6 +75,9 @@ void sibr::RemotePointView::send_receive()
 					sendData[jZFar] = _remoteInfo.zfar;
 					sendData[jZNear] = _remoteInfo.znear;
 					sendData[jKeepAlive] = _keepAlive ? 1 : 0;
+					sendData[jCheckbox1] = _checkbox1 ? 1 : 0;
+					sendData[jCheckbox2] = _checkbox2 ? 1 : 0;
+					sendData[jCheckbox3] = _checkbox3 ? 1 : 0;
 					sendData[jViewMat] = std::vector<float>((float*)&_remoteInfo.view, ((float*)&_remoteInfo.view) + 16);
 					sendData[jViewProjMat] = std::vector<float>((float*)&_remoteInfo.viewProj, ((float*)&_remoteInfo.viewProj) + 16);
 
@@ -197,7 +207,12 @@ void sibr::RemotePointView::onGUI()
 		ImGui::Checkbox("SHs Python", &_doSHsPython);
 		ImGui::Checkbox("Rot-Scale Python", &_doRotScalePython);
 		ImGui::Checkbox("Keep model alive (after training)", &_keepAlive);
+		ImGui::Checkbox("Checkbox 1", &_checkbox1);
+		ImGui::Checkbox("Checkbox 2", &_checkbox2);
+		ImGui::Checkbox("Checkbox 3", &_checkbox3);
 		ImGui::SliderFloat("Scaling Modifier", &_scalingModifier, 0.001f, 1.0f);
+		ImGui::SliderFloat("SliderFloat 1", &_sliderFloat1, 0.001f, 1.0f);
+		ImGui::SliderFloat("SliderFloat 2", &_sliderFloat2, 0.001f, 1.0f);
 		ImGui::SliderInt("Frame", &_frame, 0, 100);
 	}
 	ImGui::End();

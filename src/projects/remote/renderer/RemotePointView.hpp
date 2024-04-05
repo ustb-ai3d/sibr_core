@@ -88,9 +88,14 @@ namespace sibr {
 		bool _doSHsPython = false;
 		bool _doRotScalePython = false;
 		bool _keepAlive = true;
+		bool _checkbox1 = false;
+		bool _checkbox2 = false;
+		bool _checkbox3 = false;
 		bool _showSfM = false;
 
 		float _scalingModifier = 1.0f;
+		float _sliderFloat1 = 0.5f;
+		float _sliderFloat2 = 0.5f;
 		int _frame = 0;
 
 		std::atomic<bool> keep_running = true;
