@@ -597,13 +597,14 @@ namespace sibr
 			_user_cam = generateCamFrustum(_userCurrentCam->getCamera(), 0.0f, _userCameraScaling, false);
 			_cameras.clear();
 
-			int id = 0;
+			int index = 0;
 			for (const auto& inputCam : _scene->cameras()->inputCameras()) {
-				const bool isUsed = _scene->cameras()->isCameraUsedForRendering(inputCam->id());
+				const bool isUsed = _scene->cameras()->isCameraUsedForRendering(index);
 				_cameras.push_back(CameraInfos(*inputCam, inputCam->id(), isUsed));
 
 				if (inputCam->isActive())
 					(isUsed ? _used_cams : _non_used_cams)->merge(*generateCamFrustum(*inputCam, 0.0f, _pathScaling));
+				index++;
 			}
 			addMeshAsLines("scene cam", _user_cam).setColor({ 1,0,0 }).setDepthTest(true);
 			addMeshAsLines("used cams", _used_cams).setColor({ 0,1,0 }).setDepthTest(true);
