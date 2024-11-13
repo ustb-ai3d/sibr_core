@@ -84,6 +84,8 @@ namespace sibr{
 
 		void getParsedNeurofluidData(const std::string& dataset_path);
 
+		void getParsedScalarflowData(const std::string& dataset_path);
+
 		void getParsedChunkedData(const std::string& dataset_path);
 
 		/**

@@ -291,6 +291,16 @@ namespace sibr {
 		_meshPath = dataset_path;
 	}
 
+	void ParseData::getParsedScalarflowData(const std::string& dataset_path)
+	{
+		_camInfos = InputCamera::loadJSON(dataset_path + "/cameras.json");
+		_basePathName = dataset_path;
+		_imgPath = dataset_path;
+
+		populateFromCamInfos();
+		_meshPath = dataset_path;
+	}
+
 	void ParseData::getParsedGaussianData(const std::string& dataset_path)
 	{
 		_camInfos = InputCamera::loadJSON(dataset_path + "/cameras.json");
@@ -502,6 +512,7 @@ namespace sibr {
 		std::string blender = myArgs.dataset_path.get() + "/transforms_train.json";
 		std::string neurofluid = myArgs.dataset_path.get() + "/box.pt";
 		std::string gaussian = myArgs.dataset_path.get() + "/cameras.json";
+		std::string scalarflow = myArgs.dataset_path.get() + "/input/cam";
 
 		if(datasetTypeStr == "sibr") {
 			if (!sibr::fileExists(bundler))
@@ -593,6 +604,10 @@ namespace sibr {
 			{
 				_datasetType = Type::NEUROFLUID;
 			}
+			else if (sibr::directoryExists(scalarflow))
+			{
+				_datasetType = Type::SCALARFLOW;
+			}
 			else {
 				SIBR_ERR << "Cannot determine type of dataset at /" + myArgs.dataset_path.get() + customPath << std::endl;
 			}
@@ -602,6 +617,7 @@ namespace sibr {
 			case Type::GAUSSIAN:			getParsedGaussianData(myArgs.dataset_path); break;
 			case Type::BLENDER:			getParsedBlenderData(myArgs.dataset_path); break;
 			case Type::NEUROFLUID:			getParsedNeurofluidData(myArgs.dataset_path); break;
+			case Type::SCALARFLOW:			getParsedScalarflowData(myArgs.dataset_path); break;
 			case Type::SIBR : 			getParsedBundlerData(myArgs.dataset_path, customPath, myArgs.scene_metadata_filename); break;
 			case Type::COLMAP_CAPREAL : getParsedColmapData(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, true); break;
 			case Type::COLMAP : 		getParsedColmapData(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, false); break;
