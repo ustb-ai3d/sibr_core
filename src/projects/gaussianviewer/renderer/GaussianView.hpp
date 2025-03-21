@@ -70,6 +70,11 @@ namespace sibr {
 		 * \param input The inputs state.
 		 */
 		void onUpdate(Input& input) override;
+		
+		float currenttime;
+		float totalcount = 1.0; 
+		float flag = 1.0; 
+
 
 		/**
 		 * Update the GUI.
@@ -92,16 +97,28 @@ namespace sibr {
 		char _buff[512] = "cropped.ply";
 
 		bool _fastCulling = true;
+		bool _restspeed = false;
 		int _device = 0;
 		int _sh_degree = 3;
 
 		int count;
 		float* pos_cuda;
 		float* rot_cuda;
+		float* rott_cuda;
+		float* rotdummy_cuda;
 		float* scale_cuda;
 		float* opacity_cuda;
 		float* shs_cuda;
 		int* rect_cuda;
+         
+		// added by me
+		float* trbfcenter_cuda;
+		float* trbfscale_cuda;
+		float* motion_cuda;
+		float* means3Ddummy_cuda;
+		float* opacitiesdummy_cuda;
+		float* colors_precomp_cuda;
+
 
 		GLuint imageBuffer;
 		cudaGraphicsResource_t imageBufferCuda;
@@ -116,6 +133,9 @@ namespace sibr {
 		float* background_cuda;
 
 		float _scalingModifier = 1.0f;
+		float _playspeed = 1.0f ; 
+		float _currentx = 1000 ;
+		float _currenty = 1000;
 		GaussianData* gData;
 
 		bool _interop_failed = false;

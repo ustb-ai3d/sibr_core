@@ -57,7 +57,7 @@ std::string findLargestNumberedSubdirectory(const std::string& directoryPath) {
 }
 
 
-#define PROGRAM_NAME "sibr_3Dgaussian"
+#define PROGRAM_NAME "Spacetime Gaussian"
 using namespace sibr;
 
 std::pair<int, int> findArg(const std::string& line, const std::string& name)
@@ -98,6 +98,7 @@ static void User_WriteAll(ImGuiContext* imgui_ctx, ImGuiSettingsHandler* handler
 int main(int ac, char** av) 
 {
 	// Parse Command-line Args
+	SIBR_LOG << " main process here" << std::endl;
 	CommandLineArgs::parseMainArgs(ac, av);
 	GaussianAppArgs myArgs;
 	myArgs.displayHelpIfRequired();
@@ -194,8 +195,8 @@ int main(int ac, char** av)
 	float scene_aspect_ratio = scene_width * 1.0f / scene_height;
 	float rendering_aspect_ratio = rendering_width * 1.0f / rendering_height;
 
-	rendering_width = (rendering_width <= 0) ? std::min(1200U, scene_width) : rendering_width;
-	rendering_height = (rendering_height <= 0) ? std::min(1200U, scene_width) / scene_aspect_ratio : rendering_height;
+	rendering_width = (rendering_width <= 0) ? std::min(1200U, scene_width) : rendering_width;  
+	rendering_height = (rendering_height <= 0) ? std::min(1200U, scene_width) / scene_aspect_ratio : rendering_height; 
 	if ((rendering_width > 0) && !myArgs.force_aspect_ratio ) {
 		if (abs(scene_aspect_ratio - rendering_aspect_ratio) > 0.001f) {
 			if (scene_width > scene_height) {
@@ -205,7 +206,7 @@ int main(int ac, char** av)
 				rendering_width = rendering_height * scene_aspect_ratio;
 			}
 		}
-	}
+	} 
 	Vector2u usedResolution(rendering_width, rendering_height);
 
 	const unsigned int sceneResWidth = usedResolution.x();
