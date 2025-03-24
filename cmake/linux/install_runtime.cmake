@@ -467,6 +467,13 @@ function(install_runtime installedFilePathTargetAppToResolve)
 
 
 	set(dirsToLookFor "${EXEC_PATH}")
+	if(DEFINED ENV{CUDA_PATH})
+    	file(TO_CMAKE_PATH "$ENV{CUDA_PATH}/bin" cuda_bin_path)
+		list(APPEND dirsToLookFor "${cuda_bin_path}")
+	elseif(CUDA_TOOLKIT_ROOT_DIR)
+		file(TO_CMAKE_PATH "${CUDA_TOOLKIT_ROOT_DIR}/bin" cuda_bin_path)
+		list(APPEND dirsToLookFor "${cuda_bin_path}")
+	endif()
 	if(packageDirs)
 		list(APPEND dirsToLookFor ${packageDirs})
 	endif()

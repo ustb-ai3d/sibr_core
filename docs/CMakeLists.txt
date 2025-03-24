@@ -20,7 +20,7 @@ if(BUILD_DOCUMENTATION)
 	elseif(DOXYGEN_VERSION VERSION_LESS DOXYGEN_REQUIRED_VERSION)
 		message(FATAL_ERROR "Doxygen version is less than ${DOXYGEN_REQUIRED_VERSION} (Current version is ${DOXYGEN_VERSION}).")
 	else()
-		set(DOXY_DOC_DEST_DIR	${CMAKE_INSTALL_ROOT}/docs)						## used in the doxyfile.in
+		set(DOXY_DOC_DEST_DIR	${CMAKE_INSTALL_PREFIX}/docs)						## used in the doxyfile.in
 		
 		set(DOXY_DOC_INPUT_ROOT_DIRS        "${CMAKE_HOME_DIRECTORY}/src ${CMAKE_HOME_DIRECTORY}/docs ${CMAKE_CURRENT_BINARY_DIR}/generated")    				## used in the doxyfile.in
 		set(DOXY_DOC_EXCLUDE_PATTERNS_DIRS  "${DOXY_DOC_EXCLUDE_PATTERNS_DIRS}") ## used in the doxyfile.in

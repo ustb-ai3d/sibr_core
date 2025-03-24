@@ -66,6 +66,52 @@ choco install visualstudio2019community
 - Select the projects you want to generate among the BUILD elements in the list (you can group Cmake flags by categories to access those faster)
 - Generate
 
+#### Build and install layout changes (CMake)
+
+Recent changes improved out-of-source builds and runtime packaging. Please read this if you build from source.
+
+- Default install prefix:
+  - If you do not set CMAKE_INSTALL_PREFIX yourself, it now defaults to: <build>/install (i.e., ${CMAKE_BINARY_DIR}/install).
+  - Result: installed executables are in <build>/install/bin; documentation is in <build>/install/docs.
+
+- Per-configuration install folders:
+  - If SEPARATE_CONFIGURATIONS is ON, per-config installs go to <build>/install/<Config> (e.g., Debug, Release).
+  - If OFF, installs go to <build>/install.
+
+- Third-party libraries location:
+  - EXTLIBS_PACKAGE_FOLDER moved to <build>/extlibs (was <repo>/extlibs).
+  - FetchContent/git-based dependencies are now populated and built under <build>/extlibs.
+  - If you previously stored third-party code under the source tree, let CMake refetch them, or set EXTLIBS_PACKAGE_FOLDER back to ${CMAKE_SOURCE_DIR}/extlibs to keep the old layout (not recommended).
+
+- Runtime dependency collection (Windows/Linux):
+  - The install scripts now also search for CUDA binaries in CUDA_PATH/bin (env var) or CUDA_TOOLKIT_ROOT_DIR/bin when collecting runtime DLLs/so’s.
+  - Ensure CUDA_PATH is set or CUDA Toolkit is discoverable for proper packaging.
+
+- Documentation output:
+  - The Doxygen install destination is now <build>/install/docs (follows CMAKE_INSTALL_PREFIX).
+
+- CI and scripts impact:
+  - Update paths that previously assumed <repo>/install to use <build>/install instead.
+  - Adjust any scripts referencing <repo>/extlibs to <build>/extlibs (or override EXTLIBS_PACKAGE_FOLDER).
+
+- Recommended migration steps (Windows):
+  1) Clean your build to pick up new defaults:
+     - Using File Explorer: delete the build directory, or
+     - Terminal: rmdir /S /Q build
+  2) Reconfigure:
+     - cmake -S . -B build -G "Visual Studio 16 2019" -A x64
+     - Or use CMake GUI, then Configure/Generate.
+  3) Build targets:
+     - Open build\sibr_projects.sln
+     - Build ALL_BUILD, then INSTALL
+  4) Verify outputs:
+     - Executables: build\install\bin
+     - Docs: build\install\docs
+
+- Advanced:
+  - You can still set CMAKE_INSTALL_PREFIX to any custom directory (including <repo>/install) via CMake GUI or -DCMAKE_INSTALL_PREFIX=...
+  - You can restore the old extlibs location by setting EXTLIBS_PACKAGE_FOLDER=${CMAKE_SOURCE_DIR}/extlibs before including SIBR’s library CMake files.
+
 #### Compilation
 
 - Open the generated Visual Studio solution (`build/sibr_projects.sln`)

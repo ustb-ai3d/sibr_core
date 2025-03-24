@@ -31,7 +31,7 @@
 # if you encounter problems when linking (e.g. lib not found even if it is installed),
 # please check these folders are in your search PATH environment variables.
 
-set(EXTLIBS_PACKAGE_FOLDER "${CMAKE_SOURCE_DIR}/extlibs")
+set(EXTLIBS_PACKAGE_FOLDER "${CMAKE_BINARY_DIR}/extlibs")
 
 function(sibr_addlibrary)
     if(NOT WIN32)
@@ -107,9 +107,9 @@ function(sibr_gitlibrary)
     endif()
 
     if(args_GIT_REPOSITORY AND args_GIT_TAG)
-        if(EXISTS ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/${args_SOURCE_DIR}/.git)
+        if(EXISTS ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/${args_SOURCE_DIR}/.git)
             git_describe(
-                PATH ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/${args_SOURCE_DIR}
+                PATH ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/${args_SOURCE_DIR}
                 GIT_URL SIBR_GITLIBRARY_URL
                 GIT_BRANCH SIBR_GITLIBRARY_BRANCH
                 GIT_COMMIT_HASH SIBR_GITLIBRARY_COMMIT_HASH
@@ -131,9 +131,9 @@ function(sibr_gitlibrary)
             GIT_REPOSITORY 	${args_GIT_REPOSITORY}
             GIT_TAG			${args_GIT_TAG}
             GIT_SHALLOW		ON
-            SOURCE_DIR 		${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/${args_SOURCE_DIR}
-            SUBBUILD_DIR    ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/subbuild
-            BINARY_DIR      ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/build
+            SOURCE_DIR 		${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/${args_SOURCE_DIR}
+            SUBBUILD_DIR    ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/subbuild
+            BINARY_DIR      ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/build
         )
         FetchContent_GetProperties(${args_TARGET})
         string(TOLOWER "<name>" lcTargetName)
@@ -143,13 +143,13 @@ function(sibr_gitlibrary)
             FetchContent_Populate(${args_TARGET} QUIET
                 GIT_REPOSITORY 	${args_GIT_REPOSITORY}
                 GIT_TAG			${args_GIT_TAG}
-                SOURCE_DIR 		${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/${args_SOURCE_DIR}
-                SUBBUILD_DIR    ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/subbuild
-                BINARY_DIR      ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/build
+                SOURCE_DIR 		${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/${args_SOURCE_DIR}
+                SUBBUILD_DIR    ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/subbuild
+                BINARY_DIR      ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/build
             )
         endif()
 
-        add_subdirectory(${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/${args_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/extlibs/${args_ROOT_DIR}/build)
+        add_subdirectory(${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/${args_SOURCE_DIR} ${EXTLIBS_PACKAGE_FOLDER}/${args_ROOT_DIR}/build)
 
         get_target_property(type ${args_TARGET} TYPE)
         if(NOT (type STREQUAL "INTERFACE_LIBRARY"))
