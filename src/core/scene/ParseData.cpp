@@ -16,6 +16,9 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <string>
+#include <vector>
+#include <boost/filesystem.hpp>  // 使用boost filesystem替代std::filesystem
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -24,10 +27,6 @@
 #include "core/system/String.hpp"
 #include "core/graphics/Mesh.hpp"
 #include "core/system/Utils.hpp"
-#include <algorithm>
-#include <filesystem>
-#include <string>
-#include <vector>
 
 using namespace boost::algorithm;
 namespace sibr {
@@ -264,17 +263,27 @@ namespace sibr {
 
 	void ParseData::getParsedNeurofluidData(const std::string& dataset_path)
 	{
-		// 遍历目录并筛选以"view"开头的文件夹
-		for (const auto& entry : std::filesystem::directory_iterator(dataset_path)) {
-			if (entry.is_directory()) {
-				std::string folderName = entry.path().filename().string();
-				if (folderName.substr(0, 4) == "view") {
-					// 处理transforms_test.json
-					auto testInfos = InputCamera::loadTransform(entry.path().string() + "/transforms_test.json", 800, 800, "png", 0.01f, 1000.0f, _camInfos.size());
+		boost::filesystem::path dir_path(dataset_path);
+
+		if (!boost::filesystem::exists(dir_path) || !boost::filesystem::is_directory(dir_path))
+		{
+			SIBR_ERR << "Directory does not exist: " << dataset_path << std::endl;
+			return;
+		}
+
+		for (boost::filesystem::directory_iterator it(dir_path); it != boost::filesystem::directory_iterator(); ++it)
+		{
+			if (boost::filesystem::is_directory(it->status()))
+			{
+				std::string folderName = it->path().filename().string();
+				if (folderName.substr(0, 4) == "view")
+				{
+					std::string folderPath = it->path().string();
+
+					auto testInfos = InputCamera::loadTransform(folderPath + "/transforms_test.json", 800, 800, "png", 0.01f, 1000.0f, _camInfos.size());
 					_camInfos.insert(_camInfos.end(), testInfos.begin(), testInfos.end());
 
-					// 处理transforms_train.json
-					auto trainInfos = InputCamera::loadTransform(entry.path().string() + "/transforms_train.json", 800, 800, "png", 0.01f, 1000.0f, _camInfos.size());
+					auto trainInfos = InputCamera::loadTransform(folderPath + "/transforms_train.json", 800, 800, "png", 0.01f, 1000.0f, _camInfos.size());
 					_camInfos.insert(_camInfos.end(), trainInfos.begin(), trainInfos.end());
 				}
 			}
@@ -282,8 +291,9 @@ namespace sibr {
 
 		_basePathName = dataset_path;
 
-		if (_camInfos.empty()) {
-			SIBR_ERR << "Colmap camera calibration file does not exist at /" + _basePathName + "/sparse/." << std::endl;
+		if (_camInfos.empty())
+		{
+			SIBR_ERR << "No camera information found in " << dataset_path << std::endl;
 		}
 
 		_imgPath = dataset_path;
