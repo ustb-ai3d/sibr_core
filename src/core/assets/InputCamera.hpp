@@ -286,6 +286,8 @@ namespace sibr
 
 		static std::vector<InputCamera::Ptr> loadColmapBin(const std::string& colmapSparsePath, const float zNear = 0.01f, const float zFar = 1000.0f, const int fovXfovYFlag = 0);
 
+		static std::vector<InputCamera::Ptr> loadHyperNerf(const std::string &camera_file, const float zNear, const float zFar);
+
 		static std::vector<InputCamera::Ptr> loadJSON(const std::string& jsonPath, const float zNear = 0.01f, const float zFar = 1000.0f);
 
 		/** Load cameras from a bundle file.

@@ -311,6 +311,67 @@ namespace sibr {
 		_meshPath = dataset_path;
 	}
 
+	void ParseData::getParsedHyperNerfData(const std::string &dataset_path)
+	{
+		_basePathName = dataset_path;
+
+		std::ifstream json_file(_basePathName + "/scene.json", std::ios::in);
+		if (!json_file)
+		{
+			SIBR_ERR << "HyperNerf: Cannot open scene file " << std::endl;
+			return;
+		}
+		picojson::value v;
+		picojson::set_last_error(std::string());
+		std::string err = picojson::parse(v, json_file);
+		if (!err.empty())
+		{
+			picojson::set_last_error(err);
+			json_file.setstate(std::ios::failbit);
+		}
+
+		// 提取场景参数
+		float scale = v.get("scale").get<double>();
+		float scene_to_metric = v.get("scene_to_metric").get<double>();
+		picojson::array& center_array = v.get("center").get<picojson::array>();
+		sibr::Vector3f scene_center(
+			static_cast<float>(center_array[0].get<double>()),
+			static_cast<float>(center_array[1].get<double>()),
+			static_cast<float>(center_array[2].get<double>())
+		);
+		float zNear = v.get("near").get<double>();
+		float zFar = v.get("far").get<double>();
+
+		_camInfos = sibr::InputCamera::loadHyperNerf(_basePathName + "/camera", zNear, zFar);
+
+			if (_camInfos.empty())
+		{
+			SIBR_ERR << "HyperNerf: Could not load any camera information from " + dataset_path << std::endl;
+			return;
+		}
+
+		populateFromCamInfos();
+
+		_imgPath = dataset_path + "/rgb/1x/";
+
+		// 设置点云路径 - HyperNerf通常使用points.npy
+		std::string points_npy = dataset_path + "/points.npy";
+		std::string points_ply = dataset_path + "/points3d.ply";
+
+		if (sibr::fileExists(points_ply))
+		{
+			_meshPath = points_ply;
+		}
+		else if (sibr::fileExists(points_npy))
+		{
+			_meshPath = points_npy; // todo：需要转换numpy到ply格式
+		}
+		else
+		{
+			_meshPath = dataset_path;
+		}
+	}
+
 	void ParseData::getParsedGaussianData(const std::string& dataset_path)
 	{
 		_camInfos = InputCamera::loadJSON(dataset_path + "/cameras.json");
@@ -523,6 +584,7 @@ namespace sibr {
 		std::string neurofluid = myArgs.dataset_path.get() + "/box.pt";
 		std::string gaussian = myArgs.dataset_path.get() + "/cameras.json";
 		std::string scalarflow = myArgs.dataset_path.get() + "/input/cam";
+		std::string hypernerf = myArgs.dataset_path.get() + "/points.npy";
 
 		if(datasetTypeStr == "sibr") {
 			if (!sibr::fileExists(bundler))
@@ -618,6 +680,10 @@ namespace sibr {
 			{
 				_datasetType = Type::SCALARFLOW;
 			}
+			else if (sibr::fileExists(hypernerf))
+			{
+				_datasetType = Type::HYPERNERF;
+			}
 			else {
 				SIBR_ERR << "Cannot determine type of dataset at /" + myArgs.dataset_path.get() + customPath << std::endl;
 			}
@@ -632,6 +698,7 @@ namespace sibr {
 			case Type::COLMAP_CAPREAL : getParsedColmapData(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, true); break;
 			case Type::COLMAP : 		getParsedColmapData(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, false); break;
 			case Type::COLMAP2 : 		getParsedColmap2Data(myArgs.dataset_path, myArgs.colmap_fovXfovY_flag, false); break;
+			case Type::HYPERNERF:			getParsedHyperNerfData(myArgs.dataset_path); break;
 			case Type::CHUNKED:			getParsedChunkedData(myArgs.dataset_path); break;
 			case Type::NVM : 			getParsedNVMData(myArgs.dataset_path, customPath, "/nvm/"); break;
 			case Type::MESHROOM : 		if (sibr::directoryExists(meshroom)) getParsedMeshroomData(myArgs.dataset_path.get() + "/../../");

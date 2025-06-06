@@ -16,6 +16,7 @@
 #include <map>
 #include "core/system/String.hpp"
 #include "picojson/picojson.hpp"
+#include <filesystem>
 
 
 // Colmap binary stuff
@@ -1573,5 +1574,107 @@ namespace sibr
 		return cameras;
 	}
 
+	std::vector<InputCamera::Ptr> InputCamera::loadHyperNerf(const std::string &camera_dir, const float zNear, const float zFar)
+	{
+		std::vector<InputCamera::Ptr> _camInfos;
 
-} 
+		// 获取camera目录下的所有JSON文件
+		std::vector<std::string> camera_files;
+		for (const auto &entry : std::filesystem::directory_iterator(camera_dir))
+		{
+			if (entry.is_regular_file() && entry.path().extension() == ".json")
+			{
+				camera_files.push_back(entry.path().string());
+			}
+		}
+
+		// 按文件名排序
+		std::sort(camera_files.begin(), camera_files.end());
+
+		// 加载每个相机文件
+		for (int cam_id = 0; cam_id < camera_files.size(); ++cam_id)
+		{
+			std::string camera_file = camera_files[cam_id];
+
+			std::ifstream json_file(camera_file, std::ios::in);
+			if (!json_file)
+			{
+				SIBR_ERR << "HyperNerf: Cannot open camera file: " << camera_file << std::endl;
+				return _camInfos;
+			}
+
+			picojson::value v;
+			picojson::set_last_error(std::string());
+			std::string err = picojson::parse(v, json_file);
+			if (!err.empty())
+			{
+				picojson::set_last_error(err);
+				json_file.setstate(std::ios::failbit);
+			}
+
+			// 提取相机参数
+			auto orientation_array = v.get("orientation").get<picojson::array>();
+			auto position_array = v.get("position").get<picojson::array>();
+			auto image_size_array = v.get("image_size").get<picojson::array>();
+			auto principal_point_array = v.get("principal_point").get<picojson::array>();
+
+			double focal_length = v.get("focal_length").get<double>();
+			double pixel_aspect_ratio = v.get("pixel_aspect_ratio").get<double>();
+
+			// 构建旋转矩阵
+			sibr::Matrix3f orientation;
+			for (int i = 0; i < 3; ++i)
+			{
+				auto row = orientation_array[i].get<picojson::array>();
+				for (int j = 0; j < 3; ++j)
+				{
+					orientation(i, j) = static_cast<float>(row[j].get<double>());
+				}
+			}
+
+			// 提取位置
+			sibr::Vector3f position(
+				static_cast<float>(position_array[0].get<double>()),
+				static_cast<float>(position_array[1].get<double>()),
+				static_cast<float>(position_array[2].get<double>()));
+
+			// 提取图像尺寸
+			int width = static_cast<int>(image_size_array[0].get<double>());
+			int height = static_cast<int>(image_size_array[1].get<double>());
+
+			// 提取主点
+			float cx = static_cast<float>(principal_point_array[0].get<double>());
+			float cy = static_cast<float>(principal_point_array[1].get<double>());
+
+			// 计算焦距 (考虑像素纵横比)
+			float fx = static_cast<float>(focal_length);
+			float fy = static_cast<float>(focal_length * pixel_aspect_ratio);
+
+			// 转换到SIBR相机坐标系 (可能需要调整坐标系转换)
+			sibr::Matrix3f converter;
+			converter << 1, 0, 0,
+				0, -1, 0,
+				0, 0, -1;
+
+			orientation = orientation * converter;
+
+			// 创建InputCamera
+			sibr::InputCamera::Ptr camera = std::make_shared<InputCamera>(fy, fx, 0.0f, 0.0f, width, height, cam_id);
+
+			// 设置图像名称 (从文件名提取)
+			std::string filename = std::filesystem::path(camera_file).stem().string();
+			camera->name(filename + ".png"); // 假设图像是PNG格式
+			// 设置位置和旋转
+			camera->position(position);
+			camera->rotation(sibr::Quaternionf(orientation));
+
+			// 设置近远平面
+			camera->znear(zNear);
+			camera->zfar(zFar);
+
+			_camInfos.push_back(camera);
+		}
+
+		return _camInfos;
+	}
+}
