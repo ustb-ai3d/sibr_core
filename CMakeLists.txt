@@ -13,7 +13,7 @@ set (CMAKE_SYSTEM_VERSION 10.0.15063.0 CACHE INTERNAL "Cmake system version" FOR
 PROJECT(sibr_projects)
 
 set(REQUIRED_VERSION "3.22.0")
-set(CHECKED_VERSION "3.27.0")
+set(CHECKED_VERSION "3.31.6")
 
 if (CMAKE_VERSION VERSION_LESS REQUIRED_VERSION)
     message(WARNING "Deprecated version of cmake. Please update to at least ${REQUIRED_VERSION} (${CHECKED_VERSION} recommended).")

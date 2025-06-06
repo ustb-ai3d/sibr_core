@@ -170,7 +170,20 @@ if (WIN32)
     endif()
 endif()
 
-find_package(Boost 1.71.0 REQUIRED COMPONENTS ${Boost_REQUIRED_COMPONENTS})
+if(POLICY CMP0144)
+    cmake_policy(SET CMP0144 NEW)
+endif()
+
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
+
+# 同时可以设置正确的变量名
+if(DEFINED BOOST_ROOT AND NOT DEFINED Boost_ROOT)
+    set(Boost_ROOT ${BOOST_ROOT})
+endif()
+
+find_package(Boost 1.71.0 REQUIRED COMPONENTS system chrono filesystem date_time)
 
 if(WIN32)
 	add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/EHsc>")
