@@ -53,7 +53,20 @@ namespace sibr{
 		* \ingroup sibr_scene
 		*/
 		enum class Type {
-			EMPTY, GAUSSIAN, BLENDER, SIBR, COLMAP_CAPREAL, COLMAP, COLMAP2, NVM, MESHROOM, CHUNKED, EXTERNAL, NEUROFLUID, SCALARFLOW, HYPERNERF
+			EMPTY = 0,
+			GAUSSIAN,
+			BLENDER,
+			NEUROFLUID,
+			SCALARFLOW,
+			SIBR,
+			COLMAP_CAPREAL,
+			COLMAP,
+			COLMAP2,
+			HYPERNERF,
+			CHUNKED,
+			NVM,
+			MESHROOM,
+			PICO // 新增
 		};
 
 		/**
