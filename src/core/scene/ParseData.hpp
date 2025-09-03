@@ -89,6 +89,8 @@ namespace sibr{
 
 		void getParsedChunkedData(const std::string& dataset_path);
 
+		void getParsedPicoData(const std::string& dataset_path); // 新增声明
+
 		/**
 		* \brief Function to parse data from a template dataset path.
 		* \param dataset_path Path to the folder containing data

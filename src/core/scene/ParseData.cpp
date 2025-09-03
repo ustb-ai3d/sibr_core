@@ -565,6 +565,108 @@ namespace sibr {
 		_meshPath = (sibr::fileExists(_meshPath)) ? _meshPath : dataset_path + "/capreal/mesh.ply";
 	}
 
+	void ParseData::getParsedPicoData(const std::string& dataset_path)
+	{
+        _basePathName = dataset_path;
+
+        // 读取内参
+        std::ifstream jf(dataset_path + "/params.json", std::ios::in);
+        if (!jf) {
+            SIBR_ERR << "PICO: params.json missing at " << dataset_path << std::endl;
+            return;
+        }
+        picojson::value pv;
+        picojson::set_last_error(std::string());
+        std::string perr = picojson::parse(pv, jf);
+        if (!perr.empty()) {
+            SIBR_ERR << "PICO: params.json parse error: " << perr << std::endl;
+            return;
+        }
+        const double fx = pv.get("fx").get<double>();
+        const double fy = pv.get("fy").get<double>();
+        const double cx = pv.get("cx").get<double>();
+        const double cy = pv.get("cy").get<double>();
+        const int W = int(pv.get("width").get<double>());
+        const int H = int(pv.get("height").get<double>());
+
+        // 遍历每帧 json，使用设备位姿作为相机位姿；只绑定左眼 _0 图像
+        std::string jsonDir = dataset_path + "/json";
+        std::string imgDir = dataset_path + "/images";
+        if (!sibr::directoryExists(jsonDir) || !sibr::directoryExists(imgDir)) {
+            SIBR_ERR << "PICO: missing json/ or images/ directory at " << dataset_path << std::endl;
+            return;
+        }
+
+        std::vector<std::string> files = sibr::listFiles(jsonDir, false, ".json");
+        std::sort(files.begin(), files.end());
+
+		sibr::Matrix3f converter;
+		converter << 1, 0, 0,
+			0, 1, 0,
+			0, 0, 1;
+
+        uint camId = 0;
+        for (const auto& f : files) {
+            // 统一构建可用的完整路径（如果 f 已经是绝对/含父目录，就直接用）
+            boost::filesystem::path pf(f);
+            std::string fpath = pf.has_parent_path() ? pf.string() : (jsonDir + "/" + pf.filename().string());
+
+            const std::string stem = sibr::removeExtension(sibr::getFileName(fpath)); // e.g. image_13847403673803
+
+            std::ifstream jf2(fpath, std::ios::in);
+            if (!jf2) { SIBR_WRG << "PICO: cannot open frame json: " << fpath << std::endl; continue; }
+            picojson::value fv;
+            picojson::set_last_error(std::string());
+            std::string ferr = picojson::parse(fv, jf2);
+            if (!ferr.empty()) continue;
+
+            // 位置与旋转（rotation 为 [qw,qx,qy,qz]）
+            auto& parr = fv.get("position").get<picojson::array>();
+            auto& qarr = fv.get("rotation").get<picojson::array>();
+            if (parr.size() != 3 || qarr.size() != 4) continue;
+
+            sibr::Vector3f t(
+                float(parr[0].get<double>()),
+                float(parr[1].get<double>()),
+                float(parr[2].get<double>()));
+            sibr::Quaternionf q0(
+                float(qarr[0].get<double>()),
+                float(qarr[1].get<double>()),
+                float(qarr[2].get<double>()),
+                float(qarr[3].get<double>()));
+			sibr::Matrix3f tmp = q0.toRotationMatrix() * converter;
+			sibr::Quaternionf q = quatFromMatrix(tmp);
+
+            // 只找左眼图像：image_<timestamp>_0.{png|jpg|jpeg|bmp}
+            std::string name0;
+            for (const char* ext : { ".png", ".jpg", ".jpeg", ".bmp" }) {
+                const std::string cand = stem + "_0" + ext;
+                if (sibr::fileExists(imgDir + "/" + cand)) { name0 = cand; break; }
+            }
+            if (name0.empty()) continue;
+
+            // 构造相机（内参直接用 params.json；外参=设备位姿）
+            auto cam = std::make_shared<InputCamera>(
+                float(fy), float(fx), float(cy), float(cx), W, H, int(camId++));
+            cam->name(name0);          // 相对 _imgPath 的文件名
+            cam->position(t);
+            cam->rotation(q);
+            cam->znear(0.01f);
+            cam->zfar(1000.0f);
+
+            _camInfos.push_back(cam);
+        }
+
+        if (_camInfos.empty()) {
+            SIBR_ERR << "PICO: no valid frames found in " << jsonDir << std::endl;
+            return;
+        }
+
+        _imgPath = dataset_path + "/images/";
+        populateFromCamInfos();
+        _meshPath = dataset_path; // 无网格，保持一致风格
+    }
+
 	void ParseData::getParsedData(const BasicIBRAppArgs & myArgs, const std::string & customPath)
 	{
 		std::string datasetTypeStr = myArgs.dataset_type.get();
@@ -585,6 +687,7 @@ namespace sibr {
 		std::string gaussian = myArgs.dataset_path.get() + "/cameras.json";
 		std::string scalarflow = myArgs.dataset_path.get() + "/input/cam";
 		std::string hypernerf = myArgs.dataset_path.get() + "/points.npy";
+		std::string pico_params = myArgs.dataset_path.get() + "/params.json";
 
 		if(datasetTypeStr == "sibr") {
 			if (!sibr::fileExists(bundler))
@@ -641,6 +744,13 @@ namespace sibr {
 
 			_datasetType = Type::BLENDER;
 		}
+		else if (datasetTypeStr == "pico")
+		{
+			if (!(sibr::fileExists(pico_params)))
+				SIBR_ERR << "Cannot use dataset_type " + myArgs.dataset_type.get() + " at /" + myArgs.dataset_path.get() + "." << std::endl
+				<< "Reason : PICO requires images/, json/ and params.json" << std::endl;
+			_datasetType = Type::PICO;
+		}
 		else {
 			if (sibr::fileExists(bundler)) {
 				_datasetType = Type::SIBR;
@@ -684,6 +794,10 @@ namespace sibr {
 			{
 				_datasetType = Type::HYPERNERF;
 			}
+			else if (sibr::fileExists(pico_params))
+			{
+				_datasetType = Type::PICO;
+			}
 			else {
 				SIBR_ERR << "Cannot determine type of dataset at /" + myArgs.dataset_path.get() + customPath << std::endl;
 			}
@@ -702,7 +816,9 @@ namespace sibr {
 			case Type::CHUNKED:			getParsedChunkedData(myArgs.dataset_path); break;
 			case Type::NVM : 			getParsedNVMData(myArgs.dataset_path, customPath, "/nvm/"); break;
 			case Type::MESHROOM : 		if (sibr::directoryExists(meshroom)) getParsedMeshroomData(myArgs.dataset_path.get() + "/../../");
-										else if (sibr::directoryExists(meshroom_sibr)) getParsedMeshroomData(myArgs.dataset_path); break;
+                                        else if (sibr::directoryExists(meshroom_sibr)) getParsedMeshroomData(myArgs.dataset_path); break;
+            case Type::PICO:				getParsedPicoData(myArgs.dataset_path); break; // 新增
+            case Type::EMPTY: 			break;
 		}
 		
 		// What happens if multiple are present?
