@@ -1,0 +1,31 @@
+{
+  // 使用 MSVC 调试器（cppvsdbg）
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug SIBR Remote Gaussian (Launch)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${config:sibr.buildDir}\\install\\bin\\SIBR_remoteGaussian_app_d.exe",
+      "args": [
+        "--ip", "222.199.197.149",
+        "--port", "31364",
+        "--path", "Z:\\docker_data\\datasets\\lava"
+      ],
+      "cwd": "${config:sibr.buildDir}\\install\\bin", 
+      "symbolSearchPath": "${config:sibr.buildDir};${config:sibr.buildDir}\\bin\\Debug;${config:sibr.buildDir}\\install\\bin",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "environment": [
+        { "name": "PATH", "value": "${config:sibr.buildDir}\\install\\bin;${config:sibr.buildDir}\\bin\\Debug;%PATH%" }
+      ]
+    },
+    {
+      "name": "Debug SIBR Remote Gaussian (Attach)",
+      "type": "cppvsdbg",
+      "request": "attach",
+      "processId": "${command:pickProcess}",
+      "symbolSearchPath": "${config:sibr.buildDir};${config:sibr.buildDir}\\bin\\Debug;${config:sibr.buildDir}\\install\\bin"
+    }
+  ]
+}
